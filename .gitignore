@@ -88,3 +88,6 @@ flask/
 
 # Rope project settings
 .ropeproject
+
+# Temporal folder
+tmp/
