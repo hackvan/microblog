@@ -91,3 +91,6 @@ flask/
 
 # Temporal folder
 tmp/
+
+# Temporal database for tests:
+test.db
