@@ -1,9 +1,10 @@
-from app import db
 from hashlib import md5
+from app import db
 
 # This is a direct translation of the association table.
 # use the lower level APIs in flask-sqlalchemy to create the table without an associated model.
-followers = db.Table('followers',
+followers = db.Table(
+	'followers',
 	db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
 	db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))
 )
@@ -69,7 +70,7 @@ class User(db.Model):
 
 	# This method returns a query object, not the results. 
 	# This is similar to how relationships with lazy = 'dynamic' work.
-	def followed_post(self):
+	def followed_posts(self):
 		return Post.query.join(followers, (followers.c.followed_id == Post.user_id))\
 						 .filter(followers.c.follower_id == self.id)\
 						 .order_by(Post.timestamp.desc())
