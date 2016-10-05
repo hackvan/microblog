@@ -1,10 +1,11 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask_login import login_user, logout_user, current_user, login_required
-from app import app, db, lm, oid
 from datetime import datetime
-from .forms import LoginForm, EditForm, PostForm
+from app import app, db, lm, oid
+from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS
+from .forms import LoginForm, EditForm, PostForm, SearchForm
 from .models import User, Post
-from config import POSTS_PER_PAGE
+from .emails import follower_notification
 
 @app.before_request
 def before_request():
@@ -13,6 +14,7 @@ def before_request():
         g.user.last_seen = datetime.utcnow()
         db.session.add(g.user)
         db.session.commit()
+        g.search_form = SearchForm()
 
 @lm.user_loader
 def load_user(id):
@@ -147,6 +149,7 @@ def follow(nickname):
     db.session.add(u)
     db.session.commit()
     flash('You are now following %s.' % nickname)
+    follower_notification(user, g.user)
     return redirect(url_for('user', nickname=nickname))
 
 @app.route('/unfollow/<nickname>')
@@ -167,3 +170,24 @@ def unfollow(nickname):
     db.session.commit()
     flash('You have stopped following %s.' % nickname)
     return redirect(url_for('user', nickname=nickname))
+
+'''
+The reason the search work isn't done directly here is that if a user then hits the refresh
+button the browser will put up a warning indicating that form data will be resubmitted. 
+This is avoided when the response to a POST request is a redirect, because after the redirect 
+the browser's refresh button will reload the redirected page.
+'''
+@app.route('/search', methods=['POST'])
+@login_required
+def search():
+    if not g.search_form.validate_on_submit():
+        return redirect(url_for('index'))
+    return redirect(url_for('search_results', query=g.search_forms.search.data))
+
+@app.route('/search_results/<query>')
+@login_required
+def search_results(query):
+    results = Post.query.whoosh_search(query, MAX_SEARCH_RESULTS).all()
+    return render_template('search_results.html',
+                           query=query,
+                           results=results)
