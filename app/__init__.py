@@ -25,6 +25,10 @@ from app import views, models
 # Mails logging errors.
 from config import basedir, ADMINS, MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD
 
+# Integrate the wrapper of moment.js
+from .momentjs import momentjs
+app.jinja_env.globals['momentjs'] = momentjs
+
 # only enabling the emails when we run without debugging.
 # When this is running, the emails sent by the application will be received and displayed in the console window.    
 # python -m smtpd -n -c DebuggingServer localhost:25
